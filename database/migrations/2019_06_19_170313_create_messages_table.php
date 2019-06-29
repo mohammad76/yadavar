@@ -17,12 +17,9 @@ class CreateMessagesTable extends Migration
             $table->bigIncrements('id');
             $table->bigInteger('person_id');
             $table->bigInteger('user_id');
-            $table->string('reason');
+            $table->bigInteger('event_id');
             $table->text('body');
-			$table->string('type');
 			$table->longText('extra')->nullable();
-			$table->text('repeat_at');
-			$table->dateTime('last_send_at');
 			$table->timestamps();
         });
     }

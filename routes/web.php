@@ -36,6 +36,7 @@ Route::post('/my-account/event/create', 'Front\Account\EventController@store')->
 Route::get('/my-account/event/edit/{person}', 'Front\Account\EventController@edit')->name('event-edit');
 Route::post('/my-account/event/edit/{person}', 'Front\Account\EventController@update')->name('event-update');
 Route::get('/my-account/event/destroy/{person}', 'Front\Account\EventController@destroy')->name('event-destroy');
+Route::get('/my-account/send-event', 'Front\Account\EventController@send')->name('send-events');
 
 Route::get('/logout', 'Auth\MainController@logout')->name('auth-logout');
 Route::post('/user/register', 'Auth\MainController@register')->name('auth-register');

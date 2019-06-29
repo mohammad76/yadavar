@@ -4,6 +4,7 @@
 @section('description' , 'در اینجا می توانید رویداد ها را ببینید')
 @section('btn-head')
     <a class="btn btn-secondary btn-sm" href="{{url()->route('event-create')}}">افزودن رویداد</a>
+    <a class="btn btn-primary btn-sm" href="{{url()->route('send-events')}}">فعال کن</a>
 @endsection
 @section('content')
 
@@ -11,27 +12,49 @@
         <tr>
             <th>#</th>
             <th>نام مخاطب</th>
+            <th>نوع رویداد</th>
             <th>نام رویداد</th>
             <th>تاریخ رویداد</th>
             <th>اکشن</th>
         </tr>
         @foreach($events as $event)
             @php
-                $date = explode('-' , $event->date );
 
-                $now_year = date('Y');
-                   if($date[1] <= date('m')){
-                        $now_year += 1;
-                   }
-            $date = "$now_year-$date[1]-$date[2]"
+                $extra = unserialize($event->extra);
+                    if($event->type == 'yearly'){
+                     $date = explode('-' , $event->date );
+                     $now_year = date('Y');
+                        if($date[1] <= date('m')){
+                             $now_year += 1;
+                        }
+                 $date = "$now_year-$date[1]-$date[2]";
+                    }elseif ($event->type == 'monthly'){
+
+                                $date = explode('-' , $event->date );
+                                $now_month = jdate()->getMonth();
+                                    if($date[2] <=  jdate()->getDay())
+                                    {
+                                        $now_month++;
+                                    }
+
+                                $date = \Morilog\Jalali\CalendarUtils::toGregorian(jdate()->getYear(), $now_month ,  $date[2]);
+                                $date = $date[0] .'-'. $date[1] .'-'. $date[2];
+                    }elseif ($event->type == 'daily'){
+                        $date = date('Y-m-d');
+                        $date = daily_next_date($date , $extra['daily_period']  , $extra['daily_hour']);
+
+                      $date = $date . ' ' . $extra['daily_hour'] . ':00:00';
+                    }
             @endphp
             <tr>
                 <td>
                     {{$event->id}}
                 </td>
+
                 <td>
                     {{$event->person->name}}
                 </td>
+                <td>{{$event->type}}</td>
                 <td>
                     {{$event->name}}
                 </td>

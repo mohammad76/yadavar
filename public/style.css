@@ -248,6 +248,17 @@ input, textarea, select {
   margin-top: 15px;
   font-weight: 700; }
 
+fieldset {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  padding: 0 15px;
+  margin-bottom: 15px; }
+  fieldset legend {
+    font-size: 13px;
+    width: auto;
+    padding: 0 7px; }
+
 .box-post-single {
   padding: 30px;
   background-color: #fff;
@@ -455,6 +466,12 @@ input, textarea, select {
   margin-left: 5px;
   text-align: center;
   display: inline-block; }
+
+.person-box {
+  border: 1px solid #ddd;
+  padding: 10px;
+  border-radius: 5px;
+  margin-bottom: 15px; }
 
 .icon-box-section {
   padding: 4em 0; }

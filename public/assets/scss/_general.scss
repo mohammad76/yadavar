@@ -208,3 +208,15 @@ input, textarea, select {
   margin-top: 15px;
   font-weight: 700;
 }
+fieldset {
+  width: 100%;
+  border-radius: 6px;
+  border: 1px solid #bbb;
+  padding: 0 15px;
+  margin-bottom: 15px;
+  legend {
+    font-size: 13px;
+    width: auto;
+    padding: 0 7px;
+  }
+}
