@@ -6,6 +6,7 @@
 @section('content')
 
     <form class="form-people" method="post" action="{{url()->route('event-store')}}">
+        <input type="hidden" name="person_status" id="person_status" value="select">
         @csrf
 
         <div class="person-box">
@@ -92,7 +93,7 @@
                     <label for="yearly_month">ماه:</label>
                     <select class="form-control" name="yearly_month" id="yearly_month">
                         @for($i=1 ; $i<13 ; $i++)
-                        <option value="{{$i}}">{{$i}}</option>
+                            <option value="{{$i}}">{{$i}}</option>
 
                         @endfor
                     </select>
@@ -144,34 +145,34 @@
             <div class="form-row type-sections hourly-section">
                 <div class="form-group col-12 col-md-6">
                     <label for="name">دوره رویداد:</label>
-                    <select class="form-control" name="period">
+                    <select class="form-control" name="hourly_period">
                         <option value="1">هر 1 ساعت</option>
-                        <option value="1">هر 2 ساعت</option>
-                        <option value="1">هر 3 ساعت</option>
-                        <option value="1">هر 4 ساعت</option>
-                        <option value="1">هر 5 ساعت</option>
-                        <option value="1">هر 6 ساعت</option>
-                        <option value="1">هر 7 ساعت</option>
-                        <option value="1">هر 8 ساعت</option>
-                        <option value="1">هر 9 ساعت</option>
-                        <option value="1">هر 10 ساعت</option>
-                        <option value="1">هر 11 ساعت</option>
-                        <option value="1">هر 12 ساعت</option>
-                        <option value="1">هر 13 ساعت</option>
-                        <option value="1">هر 14 ساعت</option>
-                        <option value="1">هر 15 ساعت</option>
-                        <option value="1">هر 16 ساعت</option>
-                        <option value="1">هر 17 ساعت</option>
-                        <option value="1">هر 18 ساعت</option>
-                        <option value="1">هر 19 ساعت</option>
-                        <option value="1">هر 20 ساعت</option>
+                        <option value="2">هر 2 ساعت</option>
+                        <option value="3">هر 3 ساعت</option>
+                        <option value="4">هر 4 ساعت</option>
+                        <option value="5">هر 5 ساعت</option>
+                        <option value="6">هر 6 ساعت</option>
+                        <option value="7">هر 7 ساعت</option>
+                        <option value="8">هر 8 ساعت</option>
+                        <option value="9">هر 9 ساعت</option>
+                        <option value="10">هر 10 ساعت</option>
+                        <option value="11">هر 11 ساعت</option>
+                        <option value="12">هر 12 ساعت</option>
+                        <option value="13">هر 13 ساعت</option>
+                        <option value="14">هر 14 ساعت</option>
+                        <option value="15">هر 15 ساعت</option>
+                        <option value="16">هر 16 ساعت</option>
+                        <option value="17">هر 17 ساعت</option>
+                        <option value="18">هر 18 ساعت</option>
+                        <option value="19">هر 19 ساعت</option>
+                        <option value="20">هر 20 ساعت</option>
                     </select>
                 </div>
             </div>
             <div class="form-row type-sections exact-section">
                 <div class="form-group col-12 col-md-6">
-                    <label for="name">تاریخ:</label>
-                    <input type="date" class="form-control">
+                    <label for="exact_date">تاریخ:</label>
+                    <input type="text" name="exact_date" id="exact_date" class="form-control" readonly>
                 </div>
             </div>
 
@@ -215,9 +216,17 @@
                         <option value="2">شب</option>
                     </select>
                 </div>
+                <div class="form-group col-12">
+                    <input type="checkbox" name="remind_sms" id="remind_sms">
+                    <label class="form-check-label" for="remind_sms">آیا مایل به یادآوری از طریق پیامک هستید ؟</label>
+                </div>
+                <div class="form-group col-12">
+                    <input type="checkbox" name="remind_email" id="remind_email">
+                    <label class="form-check-label" for="remind_email">آیا مایل به یادآوری از طریق ایمیل هستید ؟</label>
+                </div>
                 <div class="form-group col-12 col-md-12">
                     <label for="name">توضیحات یادآوری:</label>
-                    <textarea rows="4" class="form-control"
+                    <textarea rows="4" class="form-control" name="remind_description"
                               placeholder="یک توضیح در مورد رویداد که در حال ثبت آن می باشید."></textarea>
                 </div>
             </div>
@@ -227,13 +236,32 @@
         </div>
     </form>
 
+
+@endsection
+
+
+@section('css')
+
+    <link rel="stylesheet" href="https://unpkg.com/persian-datepicker@1.2.0/dist/css/persian-datepicker.min.css">
+@endsection
+
+@section('js')
     <script src="https://ajax.googleapis.com/ajax/libs/jquery/3.4.1/jquery.min.js"></script>
+
+    <script src="https://unpkg.com/persian-date@1.1.0/dist/persian-date.min.js"></script>
+    <script src="https://unpkg.com/persian-datepicker@1.2.0/dist/js/persian-datepicker.min.js"></script>
     <script>
+        $("#exact_date").pDatepicker({
+            minDate: new Date(+Date.now() + 1 *86400000),
+            autoClose: true,
+            format: 'YYYY-MM-DD'
+        });
         $('.type-sections').slideUp();
         $('.yearly-section').slideDown();
         $('body').on('click', '.btn-add-person', function (e) {
             $('.select-person').slideUp();
             $('.create-person').slideDown();
+            $('#person_status').val('create');
             $(this).text('انتخاب مخاطب');
             $(this).removeClass('btn-add-person');
             $(this).addClass('btn-create-person');
@@ -242,6 +270,7 @@
         $('body').on('click', '.btn-create-person', function (e) {
             $('.create-person').slideUp();
             $('.select-person').slideDown();
+            $('#person_status').val('select');
             $(this).text('افزودن سریع مخاطب');
             $(this).removeClass('btn-create-person');
             $(this).addClass('btn-add-person');
@@ -250,10 +279,10 @@
         $('#event_type').change(function (e) {
             $('.type-sections').slideUp();
             $('.' + this.value + '-section').slideDown();
-            if(this.value == 'daily' || this.value == 'hourly'){
+            if (this.value == 'daily' || this.value == 'hourly') {
                 $('#remind_day_section').slideUp();
                 $('#remind_time_section').slideUp();
-            }else {
+            } else {
                 $('#remind_day_section').slideDown();
                 $('#remind_time_section').slideDown();
             }

@@ -14,7 +14,7 @@
     <link rel='stylesheet' id='font-awesome-css' href='{{url('assets/css/line-awesome.css')}}' type='text/css'
           media='all'/>
     <link rel='stylesheet' id='style-css' href='{{url('style.css')}}' type='text/css' media='all'/>
-
+    @yield('css')
 </head>
 <body >
 <div class="container-fluid @if($have_package) body-not-package @endif p-0">
@@ -51,15 +51,9 @@
                     </li>
 
                     <li>
-                        <a class="" href="#">
+                        <a class="" href="{{url()->route('credit-index')}}">
                             <i class="la la-credit-card"></i>
                             اعتبار
-                        </a>
-                    </li>
-                    <li>
-                        <a class="" href="#">
-                            <i class="la la-gear"></i>
-                            تنظیمات
                         </a>
                     </li>
                     <li>
@@ -76,7 +70,10 @@
                 <div class="menu-header">
                     <ul>
                         <li>
-                            <a href="#">شارژ حساب</a>
+                            <a href="{{url()->route('index')}}">صفحه اصلی سایت</a>
+                        </li>
+                        <li>
+                            <a href="{{url()->route('credit-index')}}">شارژ حساب</a>
                         </li>
                         <li>
                             <a href="#">ارسال تیکت</a>
@@ -105,5 +102,7 @@
        </div>
     </div>
 @endif
+
+@yield('js')
 </body>
 </html>

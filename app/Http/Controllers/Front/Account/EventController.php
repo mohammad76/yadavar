@@ -5,6 +5,7 @@ namespace App\Http\Controllers\Front\Account;
 use App\Event;
 use App\Http\Controllers\Controller;
 use App\Message;
+use App\Person;
 use Illuminate\Http\Request;
 use Morilog\Jalali\CalendarUtils;
 
@@ -28,137 +29,190 @@ class EventController extends Controller
 	public function store(Request $request)
 	{
 		
-		$user      = auth()->user();
-		$type      = $request->get('type');
-		$person_id = $request->get('person_id');
-		$name      = $request->get('name');
-		if ($type == 'yearly') {
-			
-			$date        = CalendarUtils::toGregorian(jdate()->getYear(), $request->get('yearly_month'), $request->get('yearly_day'));
-			$date        = date('Y-m-d', strtotime($date[0] . '-' . $date[1] . '-' . $date[2]));
-			$remind_at   = date('Y-m-d', strtotime("-" . $request->get('remind_day') . " day", strtotime($date)));
-			$remind_time = $request->get('remind_time');
-			$extra       = [
-				'yearly_period' => $request->get('yearly_period'),
-				'send-sms' => $request->exists('send-sms'),
-				'sms-text'  => $request->get('sms-text'),
-			];
-			$event       = $user->events()->create([
-													   'name'        => $name,
-													   'person_id'   => $person_id,
-													   'date'        => $date,
-													   'remind_at'   => $remind_at,
-													   'remind_time' => $remind_time,
-													   'type'        => $type,
-													   'extra'       => serialize($extra),
-												   ]);
-		} elseif ($type == 'monthly') {
-			$date        = jdate()->getYear() . '-' . jdate()->getMonth() . '-' . $request->get('monthly_day');
-			$remind_at   = date('Y-m-d', strtotime("-" . $request->get('remind_day') . " day", strtotime($date)));
-			$remind_time = $request->get('remind_time');
-			$extra       = [
-				'monthly_period' => $request->get('monthly_period'),
-				'send-sms' => $request->exists('send-sms'),
-				'sms-text'  => $request->get('sms-text'),
-			];
-			$event       = $user->events()->create([
-													   'name'        => $name,
-													   'person_id'   => $person_id,
-													   'date'        => $date,
-													   'remind_at'   => $remind_at,
-													   'remind_time' => $remind_time,
-													   'type'        => $type,
-													   'extra'       => serialize($extra),
-												   ]);
-		} elseif ($type == 'daily') {
-			
-			$date      = now();
-			$remind_at = now();
-			$extra     = [
-				'daily_period' => $request->get('daily_period'),
-				'daily_hour'   => $request->get('daily_hour'),
-				'send-sms' => $request->exists('send-sms'),
-				'sms-text'  => $request->get('sms-text'),
-			];
-			$event     = $user->events()->create([
-													 'name'        => $name,
-													 'person_id'   => $person_id,
-													 'date'        => $date,
-													 'remind_at'   => $remind_at,
-													 'remind_time' => 0,
-													 'type'        => $type,
-													 'extra'       => serialize($extra),
+		$user = auth()->user();
+		$type = $request->get('type');
+		
+		$name = $request->get('name');
+		
+		if ($request->get('person_status') == 'create') {
+			$person    = $user->people()->create([
+													 'name'   => $request->get('person_name'),
+													 'mobile' => $request->get('person_mobile'),
 												 ]);
-			
+			$person_id = $person->id;
+		} else {
+			$person_id = $request->get('person_id');
 		}
 		
-		
-		dd($request->all());
+		switch ($type) {
+			case 'yearly':
+				$this->store_yearly_events($request, $user, $type, $person_id, $name);
+			break;
+			case 'monthly':
+				$this->store_monthly_events($request, $user, $type, $person_id, $name);
+			break;
+			case 'daily':
+				$this->store_daily_events($request, $user, $type, $person_id, $name);
+			break;
+			case 'hourly':
+				$this->store_hourly_events($request, $user, $type, $person_id, $name);
+			case 'exact':
+				$this->store_exact_events($request, $user, $type, $person_id, $name);
+			break;
+		}
+		return redirect()->route('event-index');
 	}
 	
-	public function send()
+	private function store_yearly_events($request, $user, $type, $person_id, $name)
 	{
 		
-		
-		//		$this->monthly_send();
-		//		 $this->daily_send();
-		
+		$date        = CalendarUtils::toGregorian(jdate()->getYear(), $request->get('yearly_month'), $request->get('yearly_day'));
+		$date        = date('Y-m-d', strtotime($date[0] . '-' . $date[1] . '-' . $date[2]));
+		$remind_at   = date('Y-m-d', strtotime("-" . $request->get('remind_day') . " day", strtotime($date)));
+		$remind_time = $request->get('remind_time');
+		$extra       = [
+			'yearly_period'      => $request->get('yearly_period'),
+			'send-sms'           => $request->exists('send-sms'),
+			'sms-text'           => $request->get('sms-text'),
+			'remind_email'       => $request->exists('remind_email'),
+			'remind_sms'         => $request->exists('remind_sms'),
+			'remind_description' => $request->get('remind_description'),
+		];
+		$event       = $user->events()->create([
+												   'name'        => $name,
+												   'person_id'   => $person_id,
+												   'date'        => $date,
+												   'remind_at'   => $remind_at,
+												   'remind_time' => $remind_time,
+												   'type'        => $type,
+												   'extra'       => serialize($extra),
+											   ]);
 	}
 	
-	private function daily_send()
+	private function store_monthly_events($request, $user, $type, $person_id, $name)
 	{
-		$daily_events = Event::whereType('daily')->get();
-		
-		$all = [];
-		foreach ($daily_events as $event) {
-			if ($this->check_daily_send($event)) {
-				$all[] = $event;
-			};
-		}
-		return $all;
+		$date        = jdate()->getYear() . '-' . jdate()->getMonth() . '-' . $request->get('monthly_day');
+		$remind_at   = date('Y-m-d', strtotime("-" . $request->get('remind_day') . " day", strtotime($date)));
+		$remind_time = $request->get('remind_time');
+		$extra       = [
+			'monthly_period'     => $request->get('monthly_period'),
+			'send-sms'           => $request->exists('send-sms'),
+			'sms-text'           => $request->get('sms-text'),
+			'remind_email'       => $request->exists('remind_email'),
+			'remind_sms'         => $request->exists('remind_sms'),
+			'remind_description' => $request->get('remind_description'),
+		];
+		$event       = $user->events()->create([
+												   'name'        => $name,
+												   'person_id'   => $person_id,
+												   'date'        => $date,
+												   'remind_at'   => $remind_at,
+												   'remind_time' => $remind_time,
+												   'type'        => $type,
+												   'extra'       => serialize($extra),
+											   ]);
 	}
 	
-	private function monthly_send()
+	private function store_daily_events($request, $user, $type, $person_id, $name)
 	{
-		$monthly_events = Event::whereType('monthly')->whereDay('date', '=', jdate()->getDay())->get();
-		$all            = [];
-		foreach ($monthly_events as $event) {
-			if ($this->check_monthly_send($event)) {
-				$all[] = $event;
-			};
-		}
-		return $all;
+		$date      = now();
+		$remind_at = now();
+		$extra     = [
+			'daily_period'       => $request->get('daily_period'),
+			'daily_hour'         => $request->get('daily_hour'),
+			'send-sms'           => $request->exists('send-sms'),
+			'sms-text'           => $request->get('sms-text'),
+			'remind_email'       => $request->exists('remind_email'),
+			'remind_sms'         => $request->exists('remind_sms'),
+			'remind_description' => $request->get('remind_description'),
+		];
+		$event     = $user->events()->create([
+												 'name'        => $name,
+												 'person_id'   => $person_id,
+												 'date'        => $date,
+												 'remind_at'   => $remind_at,
+												 'remind_time' => 0,
+												 'type'        => $type,
+												 'extra'       => serialize($extra),
+											 ]);
 	}
 	
-	private function check_monthly_send($event)
+	private function store_hourly_events($request, $user, $type, $person_id, $name)
 	{
-		$extra = unserialize($event->extra);
-		if ($event->last_send_at == NULL) {
-			return TRUE;
-		}
-		
-		if (jdate(strtotime($event->last_send_at))->getMonth() + $extra['monthly_period'] <= jdate()->getMonth()) {
-			return TRUE;
-		}
-		
-		return FALSE;
+		$date      = now();
+		$remind_at = now();
+		$extra     = [
+			'hourly_period'      => $request->get('hourly_period'),
+			'send-sms'           => $request->exists('send-sms'),
+			'sms-text'           => $request->get('sms-text'),
+			'remind_email'       => $request->exists('remind_email'),
+			'remind_sms'         => $request->exists('remind_sms'),
+			'remind_description' => $request->get('remind_description'),
+		];
+		$event     = $user->events()->create([
+												 'name'        => $name,
+												 'person_id'   => $person_id,
+												 'date'        => $date,
+												 'remind_at'   => $remind_at,
+												 'remind_time' => 0,
+												 'type'        => $type,
+												 'extra'       => serialize($extra),
+											 ]);
 	}
 	
-	private function check_daily_send($event)
+	private function store_exact_events($request, $user, $type, $person_id, $name)
 	{
-		$extra = unserialize($event->extra);
-		if ($event->last_send_at == NULL) {
-			return TRUE;
+		$date        = explode('-', $this->ArtoEnNumeric($request->get('exact_date')));
+		$date        = CalendarUtils::toGregorian($date[0], $date[1], $date[2]);
+		$date        = date('Y-m-d', strtotime($date[0] . '-' . $date[1] . '-' . $date[2]));
+		$remind_at   = date('Y-m-d', strtotime("-" . $request->get('remind_day') . " day", strtotime($date)));
+		$remind_time = $request->get('remind_time');
+		$extra       = [
+			'send-sms'           => $request->exists('send-sms'),
+			'sms-text'           => $request->get('sms-text'),
+			'remind_email'       => $request->exists('remind_email'),
+			'remind_sms'         => $request->exists('remind_sms'),
+			'remind_description' => $request->get('remind_description'),
+		];
+		$event       = $user->events()->create([
+												   'name'        => $name,
+												   'person_id'   => $person_id,
+												   'date'        => $date,
+												   'remind_at'   => $remind_at,
+												   'remind_time' => $remind_time,
+												   'type'        => $type,
+												   'extra'       => serialize($extra),
+											   ]);
+	}
+	
+	private function ArtoEnNumeric($string)
+	{
+		return strtr($string, [ '۰' => '0', '۱' => '1', '۲' => '2', '۳' => '3', '۴' => '4', '۵' => '5', '۶' => '6', '۷' => '7', '۸' => '8', '۹' => '9', '٠' => '0', '١' => '1', '٢' => '2', '٣' => '3', '٤' => '4', '٥' => '5', '٦' => '6', '٧' => '7', '٨' => '8', '٩' => '9' ]);
+	}
+	
+	public function edit(Event $event)
+	{
+		$user = auth()->user();
+		if ($user->id != $event->user_id) {
+			return redirect()->route('event-index');
 		}
-		$day_of_week   = jdate()->getDayOfWeek();
-		$now_hour      = date('H');
-		$last_send_day = date('d', strtotime($event->last_send_at));
-		
-		if (in_array($day_of_week, $extra['daily_period']) && $extra['daily_hour'] == $now_hour && $last_send_day != date('d')) {
-			return TRUE;
+		$people = $user->people()->get();
+		return view('auth.account.events.edit', [ 'event' => $event , 'people' => $people ]);
+	}
+	
+	public function update(Request $request, Event $event)
+	{
+		$event->update($request->all());
+		return redirect()->route('event-index');
+	}
+	
+	public function destroy(Event $event)
+	{
+		$user = auth()->user();
+		if ($user->id == $event->user_id) {
+			$event->delete();
 		}
-		
-		return FALSE;
+		return redirect()->route('event-index');
 	}
 	
 }

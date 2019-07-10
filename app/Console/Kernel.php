@@ -2,42 +2,34 @@
 
 namespace App\Console;
 
+use App\Console\Commands\SendEventDailyCommand;
+use App\Console\Commands\SendEventHourlyCommand;
+use App\Console\Commands\SendEventMonthlyCommand;
 use App\Console\Commands\SendEventYearlyCommand;
 use Illuminate\Console\Scheduling\Schedule;
 use Illuminate\Foundation\Console\Kernel as ConsoleKernel;
 
 class Kernel extends ConsoleKernel
 {
-    /**
-     * The Artisan commands provided by your application.
-     *
-     * @var array
-     */
-    protected $commands = [
-		SendEventYearlyCommand::class
-    ];
-
-    /**
-     * Define the application's command schedule.
-     *
-     * @param  \Illuminate\Console\Scheduling\Schedule  $schedule
-     * @return void
-     */
-    protected function schedule(Schedule $schedule)
-    {
-        // $schedule->command('inspire')
-        //          ->hourly();
-    }
-
-    /**
-     * Register the commands for the application.
-     *
-     * @return void
-     */
-    protected function commands()
-    {
-        $this->load(__DIR__.'/Commands');
-
-        require base_path('routes/console.php');
-    }
+	protected $commands = [
+		SendEventYearlyCommand::class,
+		SendEventMonthlyCommand::class,
+		SendEventDailyCommand::class,
+		SendEventHourlyCommand::class,
+	];
+	
+	protected function schedule(Schedule $schedule)
+	{
+		$schedule->command('send:event:hourly')->hourly();
+		$schedule->command('send:event:daily')->hourly();
+		$schedule->command('send:event:monthly')->dailyAt('13:00');
+		$schedule->command('send:event:yearly')->dailyAt('11:00');
+	}
+	
+	protected function commands()
+	{
+		$this->load(__DIR__ . '/Commands');
+		
+		require base_path('routes/console.php');
+	}
 }

@@ -53,7 +53,10 @@ class PayController extends Controller
 		$transaction_id = $request->get('Authority');
 		$pay            = PaymentModel::where('ref_id', $transaction_id)->first();
 		$extra          = unserialize($pay->extra);
-		$package        = Package::where('id', $extra['package_id'])->first();
+		if (isset($extra['package_id'])) {
+			$package = Package::where('id', $extra['package_id'])->first();
+			
+		}
 		
 		try {
 			Payment::amount((int) $pay->amount)->transactionId($transaction_id)->verify();
@@ -62,16 +65,23 @@ class PayController extends Controller
 			$pay->update([
 							 'status' => '1',
 						 ]);
-			UserPackage::create([
-									'user_id'    => $user_id,
-									'package_id' => $extra['package_id'],
-									'start_at'   => now(),
-									'finish_at'  => date('Y-m-d H:i:s', strtotime('+' . $package->limit_days . ' day', time())),
-								]);
-			
-			User::find($user_id)->first()->update([
-													  'send_limit' => $user->send_limit + $package->send_limit,
-												  ]);
+			if (isset($extra['package_id'])) {
+				UserPackage::create([
+										'user_id'    => $user_id,
+										'package_id' => $extra['package_id'],
+										'start_at'   => now(),
+										'finish_at'  => date('Y-m-d H:i:s', strtotime('+' . $package->limit_days . ' day', time())),
+									]);
+				
+				User::find($user_id)->first()->update([
+														  'send_limit' => $user->send_limit + $package->send_limit,
+													  ]);
+			} elseif (isset($extra['credit'])) {
+				User::find($user_id)->first()->update([
+														  'send_limit' => $user->send_limit + $extra['credit'],
+													  ]);
+				return redirect()->route('credit-index');
+			}
 			
 			return view('payments.verify', [ 'code' => 200, 'transaction_id' => $transaction_id ]);
 			

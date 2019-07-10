@@ -18,6 +18,7 @@ class CreateMessagesTable extends Migration
             $table->bigInteger('person_id');
             $table->bigInteger('user_id');
             $table->bigInteger('event_id');
+			$table->string('mobile');
             $table->text('body');
 			$table->longText('extra')->nullable();
 			$table->timestamps();

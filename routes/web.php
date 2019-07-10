@@ -33,10 +33,12 @@ Route::get('/my-account/people/destroy/{person}', 'Front\Account\PersonControlle
 Route::get('/my-account/events', 'Front\Account\EventController@index')->name('event-index');
 Route::get('/my-account/event/create', 'Front\Account\EventController@create')->name('event-create');
 Route::post('/my-account/event/create', 'Front\Account\EventController@store')->name('event-store');
-Route::get('/my-account/event/edit/{person}', 'Front\Account\EventController@edit')->name('event-edit');
-Route::post('/my-account/event/edit/{person}', 'Front\Account\EventController@update')->name('event-update');
-Route::get('/my-account/event/destroy/{person}', 'Front\Account\EventController@destroy')->name('event-destroy');
-Route::get('/my-account/send-event', 'Front\Account\EventController@send')->name('send-events');
+Route::get('/my-account/event/edit/{event}', 'Front\Account\EventController@edit')->name('event-edit');
+Route::post('/my-account/event/edit/{event}', 'Front\Account\EventController@update')->name('event-update');
+Route::get('/my-account/event/destroy/{event}', 'Front\Account\EventController@destroy')->name('event-destroy');
+
+Route::get('/my-account/credit', 'Front\Account\CreditController@index')->name('credit-index');
+Route::post('/my-account/credit', 'Front\Account\CreditController@pay')->name('credit-pay');
 
 Route::get('/logout', 'Auth\MainController@logout')->name('auth-logout');
 Route::post('/user/register', 'Auth\MainController@register')->name('auth-register');
